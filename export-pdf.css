@@ -1,0 +1,288 @@
+/* 全站导出 PDF：配合 body.full-pdf-export + window.print()
+   用户需在打印对话框中选择「Microsoft Print to PDF」或「另存为 PDF」。 */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* —— 导出选项对话框 —— */
+.pdf-export-dialog {
+  margin: auto;
+  padding: 0;
+  max-width: min(440px, calc(100vw - 2rem));
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.pdf-export-dialog::backdrop {
+  background: rgba(6, 10, 14, 0.72);
+}
+
+.pdf-export-dialog-inner {
+  padding: 1.25rem 1.35rem 1.15rem;
+}
+
+.pdf-export-dialog-title {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pdf-export-dialog-hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.pdf-export-quick-row {
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+}
+
+.pdf-export-quick-btn {
+  font: inherit;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pdf-export-quick-btn:hover {
+  color: var(--text);
+}
+
+.pdf-export-quick-sep {
+  margin: 0 0.35rem;
+  color: var(--muted);
+}
+
+.pdf-export-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 1.1rem;
+}
+
+.pdf-export-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.92rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.pdf-export-label:last-child {
+  margin-bottom: 0;
+}
+
+.pdf-export-label input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.pdf-export-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.pdf-only-export-title {
+  display: none;
+}
+
+body.full-pdf-export .pdf-only-export-title {
+  display: block;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+  break-after: avoid;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm 12mm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    background: var(--bg, #fff) !important;
+  }
+
+  body.full-pdf-export .pdf-only-export-title {
+    display: block !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* 所选多块内容之间分页（第一项不加） */
+  body.full-pdf-export .app-tab-panel.pdf-export-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  #pdf-export-dialog,
+  .pdf-export-dialog {
+    display: none !important;
+  }
+
+  .app-tabs-bar,
+  .snapshot-scenarios-bar,
+  #cf-scenario-select,
+  #cf-scenario-load,
+  #cf-scenario-save-new,
+  #cf-scenario-overwrite,
+  #cf-scenario-delete,
+  #rs-scenario-select,
+  #rs-scenario-load,
+  #rs-scenario-save-new,
+  #rs-scenario-overwrite,
+  #rs-scenario-delete,
+  .nw-scenarios-bar,
+  #nw-scenario-load,
+  #nw-scenario-save-new,
+  #nw-scenario-overwrite,
+  #nw-scenario-delete,
+  #btn-reset,
+  #nw-btn-reset,
+  #btn-add-rental,
+  .btn-remove-rental,
+  #nw-btn-add-property,
+  #nw-btn-add-person,
+  #nw-btn-add-asset,
+  #nw-btn-add-liability,
+  .nw-btn-remove,
+  #btn-export-pdf,
+  #rs-btn-nw {
+    display: none !important;
+  }
+
+  /* 简化交互控件 */
+  .rs-assumption-drag,
+  .rs-col-drag {
+    display: none !important;
+  }
+
+  .nw-asset-drag-handle,
+  .nw-liab-drag-handle {
+    visibility: hidden !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+    font-size: 0 !important;
+  }
+
+  /* 现金流主区与侧栏单列 */
+  .layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sidebar .sticky-panel,
+  .sidebar-card {
+    position: static !important;
+  }
+
+  /* 净资产、模拟器横向滚动区展开以便完整打印 */
+  .nw-assets-scroll {
+    overflow: visible !important;
+    margin: 0;
+    padding: 0;
+    max-height: none !important;
+  }
+
+  .nw-invest-grid-wrap {
+    overflow: visible !important;
+  }
+
+  .rs-table-wrap {
+    overflow: visible !important;
+    max-height: none !important;
+    border-radius: 4px;
+  }
+
+  .rs-controls {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .rs-summary {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* 宽表略微缩小以利分页 */
+  .rs-table {
+    font-size: 0.62rem !important;
+    white-space: nowrap !important;
+  }
+
+  .rs-table th,
+  .rs-table td {
+    padding: 0.2rem 0.25rem !important;
+  }
+
+  .rs-table th:first-child,
+  .rs-table td:first-child,
+  .rs-table thead th {
+    position: static !important;
+    box-shadow: none !important;
+  }
+
+  /* 避免整块被拆得太碎（尽力而为） */
+  .nw-hero-card,
+  .nw-panel-head,
+  .panel-nw > .nw-panel-head {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  input,
+  textarea,
+  select {
+    border: 1px solid rgba(100, 120, 135, 0.45);
+  }
+
+  textarea {
+    max-height: 8rem;
+    overflow: hidden;
+  }
+
+  footer.footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-top: 1rem;
+  }
+}

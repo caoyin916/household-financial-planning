@@ -1,0 +1,369 @@
+/* Retirement Simulator (projection tab) — colors use global :root vars (dark theme) */
+.app-retirement {
+  max-width: 100%;
+  color: var(--text);
+}
+
+.app-retirement h2,
+.app-retirement .projection-main-title {
+  color: var(--text);
+}
+
+.rs-intro {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.rs-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.rs-assumption-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rs-assumption-section {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rs-assumption-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rs-assumption-section-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rs-assumption-section-hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.rs-members-block {
+  margin-top: 0.75rem;
+}
+
+.rs-members-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rs-members-toolbar-label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.rs-children-list.rs-assumption-list {
+  min-height: 0.5rem;
+}
+
+.rs-assumption-item .rs-child-remove {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  line-height: 1.2;
+  min-height: 1.75rem;
+}
+
+.rs-assumption-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem 1.25rem;
+  align-content: start;
+}
+
+.rs-assumption-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  border-radius: 6px;
+  padding: 0.1rem 0;
+}
+
+.rs-assumption-item.rs-dragging {
+  opacity: 0.7;
+  outline: 1px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.rs-assumption-drag {
+  flex-shrink: 0;
+  padding: 0.4rem 0.15rem 0.35rem;
+  line-height: 1;
+  font-size: 0.95rem;
+  letter-spacing: -0.12em;
+  color: var(--muted);
+  cursor: grab;
+  user-select: none;
+  border-radius: 4px;
+  margin-top: 0.2rem;
+}
+
+.rs-assumption-drag:hover {
+  color: var(--text);
+  background: rgba(66, 165, 245, 0.1);
+}
+
+.rs-assumption-drag:active {
+  cursor: grabbing;
+}
+
+.rs-controls .rs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-field-label-input {
+  width: 100%;
+  font: inherit;
+  font-weight: 500;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  min-height: 2rem;
+  box-sizing: border-box;
+}
+
+.rs-field-label-input:hover,
+.rs-field-label-input:focus {
+  border-color: rgba(66, 165, 245, 0.5);
+  outline: none;
+}
+
+.rs-controls input[type="text"],
+.rs-controls input[type="number"],
+.rs-controls input[type="date"] {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.rs-controls .rs-field-span-2 {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .rs-controls .rs-field-span-2 {
+    width: 100%;
+  }
+}
+
+.rs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.rs-actions .btn {
+  cursor: pointer;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font: inherit;
+}
+
+.rs-actions .btn-primary {
+  background: var(--accent);
+  color: #0c1014;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.rs-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.rs-summary {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(66, 165, 245, 0.35);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.rs-summary strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rs-table-wrap {
+  overflow-x: auto;
+  max-height: min(70vh, 720px);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+.rs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.rs-table th,
+.rs-table td {
+  padding: 0.45rem 0.6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.rs-table th:first-child,
+.rs-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  box-shadow: 1px 0 0 var(--border);
+}
+
+.rs-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface2);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.rs-col-label-input {
+  width: 100%;
+  min-width: 4.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.2rem 0.25rem;
+  text-align: right;
+}
+
+.rs-col-label-input:hover,
+.rs-col-label-input:focus {
+  border-color: rgba(66, 165, 245, 0.5);
+  background: rgba(66, 165, 245, 0.08);
+  outline: none;
+}
+
+.rs-col-drag {
+  display: inline-block;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: grab;
+  user-select: none;
+  line-height: 1;
+  margin-right: 0.2rem;
+}
+
+.rs-col-drag:active {
+  cursor: grabbing;
+}
+
+#rs-header-row th.rs-col-dragging {
+  opacity: 0.7;
+  outline: 1px dashed var(--accent);
+  outline-offset: -2px;
+}
+
+.rs-table thead th:first-child {
+  z-index: 3;
+  left: 0;
+}
+
+.rs-table tbody td {
+  background: var(--surface);
+}
+
+.rs-table tbody tr:hover td {
+  background: rgba(66, 165, 245, 0.12);
+  color: var(--text);
+}
+
+.rs-table tbody tr:hover td.rs-net-pos {
+  color: var(--positive);
+}
+
+.rs-table tbody tr:hover td.rs-net-neg {
+  color: var(--negative);
+}
+
+.rs-table tbody tr:hover td.rs-income {
+  color: var(--positive);
+}
+
+.rs-table tbody tr:hover td.rs-expense {
+  color: var(--negative);
+}
+
+.rs-table .rs-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-table .rs-income {
+  color: var(--positive);
+}
+
+.rs-table .rs-expense {
+  color: var(--negative);
+}
+
+.rs-table .rs-net-pos {
+  color: var(--positive);
+}
+
+.rs-table .rs-net-neg {
+  color: var(--negative);
+}
+
+.rs-footnote {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}

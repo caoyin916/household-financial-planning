@@ -1,0 +1,126 @@
+/* Tab shell: cashflow + net worth + future panels */
+
+.app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0.65rem 2rem;
+}
+
+.app-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.app-tabs-bar .app-tabs {
+  flex: 1 1 auto;
+  min-width: min(260px, 100%);
+}
+
+.app-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+.app-tab {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: transparent;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+
+.app-tab:hover {
+  color: var(--text);
+  background: rgba(28, 37, 47, 0.5);
+}
+
+.app-tab.is-active {
+  color: var(--text);
+  background: var(--surface2);
+  border-color: rgba(66, 165, 245, 0.45);
+  box-shadow: 0 0 0 1px rgba(66, 165, 245, 0.12);
+}
+
+.app-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app-tab-panels {
+  position: relative;
+}
+
+.app-tab-panel {
+  outline: none;
+}
+
+.app-tab-panel[hidden] {
+  display: none !important;
+}
+
+/* projection placeholder */
+.app-projection {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+  text-align: center;
+}
+
+.app-projection h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.app-projection p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.app-projection code {
+  font-size: 0.88em;
+  color: var(--accent);
+  background: rgba(66, 165, 245, 0.1);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.app-btn-export-pdf {
+  flex-shrink: 0;
+  padding: 0.5rem 0.95rem !important;
+  font-size: 0.875rem !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .app-tab {
+    font-size: 0.82rem;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .app-btn-export-pdf {
+    width: 100%;
+    justify-content: center;
+  }
+}

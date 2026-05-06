@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>家庭财务工具 · 现金流与净资产</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="net-worth.css" />
+  <link rel="stylesheet" href="app-tabs.css" />
+  <link rel="stylesheet" href="projection.css" />
+  <link rel="stylesheet" href="export-pdf.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="app-tabs-bar">
+      <div class="app-tabs" role="tablist" aria-label="功能切换">
+        <button type="button" class="app-tab is-active" role="tab" id="tab-btn-cashflow" aria-controls="panel-cashflow" aria-selected="true" data-tab="cashflow">家庭现金流估算</button>
+        <button type="button" class="app-tab" role="tab" id="tab-btn-networth" aria-controls="panel-networth" aria-selected="false" data-tab="networth">家庭净资产</button>
+        <button type="button" class="app-tab" role="tab" id="tab-btn-projection" aria-controls="panel-projection" aria-selected="false" data-tab="projection">Retirement Simulator</button>
+      </div>
+      <button type="button" class="btn btn-ghost app-btn-export-pdf" id="btn-export-pdf" title="选择要包含的功能模块后，在打印对话框中选择「另存为 PDF」">导出 PDF…</button>
+    </div>
+    <div class="app-tab-panels">
+      <div class="app-tab-panel is-active" id="panel-cashflow" role="tabpanel" aria-labelledby="tab-btn-cashflow">
+      <h2 class="pdf-only-export-title">家庭现金流估算</h2>
+  <div class="app">
+    <header class="header">
+      <div class="header-text">
+        <input type="text" class="editable-h1" data-label-id="lbl_h1" spellcheck="false" />
+        <textarea class="editable-subtitle" data-label-id="lbl_header_sub" rows="2" spellcheck="false"></textarea>
+      </div>
+      <input type="button" class="btn btn-ghost" id="btn-reset" data-label-id="lbl_btn_reset" />
+    </header>
+
+    <div class="snapshot-scenarios-bar" aria-label="现金流方案快照">
+      <span class="snapshot-scenarios-bar-title">方案快照</span>
+      <select id="cf-scenario-select" class="snapshot-scenario-select" aria-label="已保存现金流方案">
+        <option value="">— 选择已保存方案 —</option>
+      </select>
+      <button type="button" class="btn btn-primary btn-sm" id="cf-scenario-load">载入</button>
+      <button type="button" class="btn btn-sm" id="cf-scenario-save-new">另存为新方案…</button>
+      <button type="button" class="btn btn-sm" id="cf-scenario-overwrite">覆盖所选方案</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="cf-scenario-delete">删除所选</button>
+      <p class="snapshot-scenarios-hint">含全部金额字段、出租物业、各备注列及可编辑标题文案（与本地「标签」存档一致）。</p>
+    </div>
+
+    <section class="hero" aria-live="polite">
+      <div class="hero-row hero-row-split">
+        <div class="hero-card highlight">
+          <input type="text" class="hero-label-input" data-label-id="lbl_hero_total_cap" spellcheck="false" />
+          <span class="hero-value" id="out-total-flow">—</span>
+          <input type="text" class="hero-note-input" data-label-id="lbl_hero_total_note" spellcheck="false" />
+        </div>
+        <div class="hero-card highlight alt">
+          <input type="text" class="hero-label-input" data-label-id="lbl_hero_disp_cap" spellcheck="false" />
+          <span class="hero-value" id="out-spendable-flow">—</span>
+          <input type="text" class="hero-note-input" data-label-id="lbl_hero_disp_note" spellcheck="false" />
+        </div>
+      </div>
+      <div class="hero-row hero-row-4">
+        <div class="hero-card">
+          <input type="text" class="hero-label-input sm" data-label-id="lbl_hero_inc" spellcheck="false" />
+          <span class="hero-value sm" id="out-annual-income">—</span>
+        </div>
+        <div class="hero-card">
+          <input type="text" class="hero-label-input sm" data-label-id="lbl_hero_exp" spellcheck="false" />
+          <span class="hero-value sm" id="out-annual-expense">—</span>
+        </div>
+        <div class="hero-card">
+          <input type="text" class="hero-label-input sm" data-label-id="lbl_hero_mo_tot" spellcheck="false" />
+          <span class="hero-value sm" id="out-monthly-total">—</span>
+        </div>
+        <div class="hero-card">
+          <input type="text" class="hero-label-input sm" data-label-id="lbl_hero_mo_disp" spellcheck="false" />
+          <span class="hero-value sm" id="out-monthly-spendable">—</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <div class="columns">
+        <div class="section-group">
+          <input type="text" class="group-title-input" data-label-id="lbl_g_income" spellcheck="false" />
+          <div class="group-grid group-grid-2">
+            <section class="panel">
+              <input type="text" class="panel-title-input" data-label-id="lbl_p_labor" spellcheck="false" />
+              <textarea class="hint-input" data-label-id="lbl_hint_labor" rows="2" spellcheck="false"></textarea>
+              <div class="fields">
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_salary_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_salary_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-salary-biweekly" inputmode="decimal" placeholder="$0" data-key="incSalaryBiweekly" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incSalaryBiweekly_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_bonus_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_bonus_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-bonus-annual" inputmode="decimal" placeholder="$0" data-key="incBonusAnnual" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incBonusAnnual_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_side_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_side_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-side-annual" inputmode="decimal" placeholder="$0" data-key="incSideAnnual" data-money-signed="true" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incSideAnnual_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_rsu_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_rsu_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-rsu-annual" inputmode="decimal" placeholder="$0" data-key="incRsuAnnual" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incRsuAnnual_cmt" data-cmt-ph="1" />
+                </label>
+              </div>
+            </section>
+
+            <section class="panel">
+              <input type="text" class="panel-title-input" data-label-id="lbl_p_ret" spellcheck="false" />
+              <textarea class="hint-input" data-label-id="lbl_hint_ret" rows="2" spellcheck="false"></textarea>
+              <div class="fields">
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_dcfsa_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_dcfsa_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-dcfsa-annual" inputmode="decimal" placeholder="$0" data-key="incDcfsaAnnual" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incDcfsaAnnual_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_401kpre_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_401kpre_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-ret-401k-pre-match" inputmode="decimal" placeholder="$0" data-key="incRet401kPreMatchAnnual" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incRet401kPreMatchAnnual_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_401kaft_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_401kaft_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-ret-401k-after" inputmode="decimal" placeholder="$0" data-key="incRet401kAfterAnnual" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incRet401kAfterAnnual_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_hsa_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_hsa_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="inc-hsa-annual" inputmode="decimal" placeholder="$0" data-key="incHsaAnnual" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="incHsaAnnual_cmt" data-cmt-ph="1" />
+                </label>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="section-group">
+          <input type="text" class="group-title-input" data-label-id="lbl_g_housing" spellcheck="false" />
+          <div class="group-grid group-grid-2">
+            <section class="panel">
+              <input type="text" class="panel-title-input" data-label-id="lbl_p_home" spellcheck="false" />
+              <div class="fields">
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_mort_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_mort_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-primary-mortgage" inputmode="decimal" placeholder="$0" data-key="exPrimaryMortgage" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exPrimaryMortgage_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_ptax_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_ptax_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-primary-property-tax" inputmode="decimal" placeholder="$0" data-key="exPrimaryPropertyTax" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exPrimaryPropertyTax_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_hi_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_hi_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-home-ins" inputmode="decimal" placeholder="$0" data-key="exHomeIns" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exHomeIns_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_homerep_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_homerep_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-primary-home-repair" inputmode="decimal" placeholder="$0" data-key="exPrimaryHomeRepair" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exPrimaryHomeRepair_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_phoa_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_phoa_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-primary-hoa" inputmode="decimal" placeholder="$0" data-key="exPrimaryHoa" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exPrimaryHoa_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_al_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_al_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-auto-loan" inputmode="decimal" placeholder="$0" data-key="exAutoLoan" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exAutoLoan_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_ai_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_ai_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-auto-ins" inputmode="decimal" placeholder="$0" data-key="exAutoIns" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exAutoIns_cmt" data-cmt-ph="1" />
+                </label>
+              </div>
+            </section>
+
+            <section class="panel">
+              <input type="text" class="panel-title-input" data-label-id="lbl_p_util" spellcheck="false" />
+              <div class="fields">
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_wt_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_wt_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-water-trash" inputmode="decimal" placeholder="$0" data-key="exWaterTrash" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exWaterTrash_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_el_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_el_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-electric" inputmode="decimal" placeholder="$0" data-key="exElectric" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exElectric_cmt" data-cmt-ph="1" />
+                </label>
+                <label class="row row-line">
+                  <div class="row-label-cell">
+                    <input type="text" class="input-label-name" data-label-id="lbl_rn_ph_n" spellcheck="false" title="" />
+                    <input type="text" class="input-label-meta" data-label-id="lbl_rn_ph_m" spellcheck="false" />
+                  </div>
+                  <input type="text" class="input-money" id="ex-phone" inputmode="decimal" placeholder="$0" data-key="exPhone" autocomplete="off" />
+                  <input type="text" class="input-cmt" data-key="exPhone_cmt" data-cmt-ph="1" />
+                </label>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="section-group">
+          <input type="text" class="group-title-input" data-label-id="lbl_g_life" spellcheck="false" />
+          <section class="panel panel-wide">
+            <input type="text" class="panel-title-input" data-label-id="lbl_p_life" spellcheck="false" />
+            <div class="fields">
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_tr_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_tr_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-transport" inputmode="decimal" placeholder="$0" data-key="exTransport" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exTransport_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_ed_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_ed_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-education" inputmode="decimal" placeholder="$0" data-key="exEducation" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exEducation_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_kid_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_kid_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-kids-others" inputmode="decimal" placeholder="$0" data-key="exKidsOthers" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exKidsOthers_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_sub_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_sub_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-subs" inputmode="decimal" placeholder="$0" data-key="exSubs" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exSubs_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_food_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_food_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-food" inputmode="decimal" placeholder="$0" data-key="exFood" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exFood_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_tv_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_tv_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-travel" inputmode="decimal" placeholder="$0" data-key="exTravel" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exTravel_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_sh_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_sh_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-shopping" inputmode="decimal" placeholder="$0" data-key="exShopping" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exShopping_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_tax_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_tax_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-tax-annual" inputmode="decimal" placeholder="$0" data-key="exTaxAnnual" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exTaxAnnual_cmt" data-cmt-ph="1" />
+              </label>
+              <label class="row row-line">
+                <div class="row-label-cell">
+                  <input type="text" class="input-label-name" data-label-id="lbl_rn_oth_n" spellcheck="false" title="" />
+                  <input type="text" class="input-label-meta" data-label-id="lbl_rn_oth_m" spellcheck="false" />
+                </div>
+                <input type="text" class="input-money" id="ex-other-annual" inputmode="decimal" placeholder="$0" data-key="exOtherAnnual" autocomplete="off" />
+                <input type="text" class="input-cmt" data-key="exOtherAnnual_cmt" data-cmt-ph="1" />
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <div class="section-group">
+          <input type="text" class="group-title-input" data-label-id="lbl_g_rental" spellcheck="false" />
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <input type="text" class="panel-title-input panel-title-inline" data-label-id="lbl_p_rental_head" spellcheck="false" />
+              <input type="button" class="btn btn-primary btn-sm" id="btn-add-rental" data-label-id="lbl_btn_add_rental" />
+            </div>
+            <textarea class="hint-input" data-label-id="lbl_hint_rental_section" rows="2" spellcheck="false"></textarea>
+            <div id="rental-list" class="rental-list"></div>
+            <p class="empty-rental" id="rental-empty">
+              <input type="text" class="empty-rental-input" data-label-id="lbl_empty_rental" spellcheck="false" />
+            </p>
+          </section>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="panel sticky-panel sidebar-card">
+          <input type="text" class="panel-title-input sidebar-title" data-label-id="lbl_sb_title" spellcheck="false" />
+          <input type="text" class="subhead-input" data-label-id="lbl_sb_sub1" spellcheck="false" />
+          <ul class="breakdown" id="bd-income"></ul>
+          <input type="text" class="subhead-input" data-label-id="lbl_sb_sub2" spellcheck="false" />
+          <ul class="breakdown" id="bd-expense-fixed"></ul>
+          <ul class="breakdown" id="bd-expense-rentals"></ul>
+          <textarea class="fine-input" data-label-id="lbl_sb_fine" rows="3" spellcheck="false"></textarea>
+          <div class="label-edit-row">
+            <span class="label-edit-k">备注列占位</span>
+            <input type="text" class="placeholder-ph-input" data-label-id="lbl_ph_cmt" spellcheck="false" />
+          </div>
+          <div class="label-edit-row">
+            <span class="label-edit-k">物业名占位</span>
+            <input type="text" class="placeholder-ph-input" data-label-id="lbl_rent_title_ph" spellcheck="false" />
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="footer">
+      <input type="text" class="footer-input" data-label-id="lbl_footer" spellcheck="false" />
+    </footer>
+  </div>
+      </div>
+
+      <div class="app-tab-panel" id="panel-networth" role="tabpanel" aria-labelledby="tab-btn-networth" hidden>
+        <h2 class="pdf-only-export-title">家庭净资产</h2>
+        <div class="app-nw">
+          <header class="header" style="margin-bottom: 1rem;">
+            <div class="header-text">
+              <h1 style="margin:0 0 0.35rem;">家庭净资产计算器</h1>
+              <p class="subtitle" style="margin:0;">房产按「估价 − 剩余房贷」计入权益；金融资产与负债分项相加。数字均保存在本机浏览器。</p>
+            </div>
+            <input type="button" class="btn btn-ghost" id="nw-btn-reset" value="重置全部" />
+          </header>
+
+          <div class="nw-scenarios-bar" aria-label="方案快照">
+            <span class="nw-scenarios-bar-title">方案快照</span>
+            <select id="nw-scenario-select" class="nw-scenario-select" aria-label="已保存方案">
+              <option value="">— 选择已保存方案 —</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" id="nw-scenario-load">载入</button>
+            <button type="button" class="btn btn-sm" id="nw-scenario-save-new">另存为新方案…</button>
+            <button type="button" class="btn btn-sm" id="nw-scenario-overwrite">覆盖所选方案</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="nw-scenario-delete">删除所选</button>
+            <p class="nw-scenarios-hint">每个快照保存本页完整数据（房产各字段、金融资产矩阵、负债行、成员名等），可随时切换对比。</p>
+          </div>
+
+          <section class="nw-hero" aria-live="polite">
+            <div class="nw-hero-card">
+              <span class="nw-hero-label">总净资产</span>
+              <span class="nw-hero-value" id="nw-out-total">—</span>
+              <p class="nw-hint" id="nw-hero-formula"></p>
+              <div class="nw-subtotals">
+                <div class="nw-mini-card">
+                  <div class="nw-mini-label">房产净值</div>
+                  <div class="nw-mini-value" id="nw-out-re">—</div>
+                </div>
+                <div class="nw-mini-card">
+                  <div class="nw-mini-label">金融资产与其他资产</div>
+                  <div class="nw-mini-value" id="nw-out-fin">—</div>
+                </div>
+                <div class="nw-mini-card">
+                  <div class="nw-mini-label">其他负债（扣减）</div>
+                  <div class="nw-mini-value" id="nw-out-liab">—</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-group">
+            <h2 class="group-title-input" style="border:none; margin-bottom:0.65rem; padding-left:0;">一、房产</h2>
+            <p class="nw-section-note">填写<strong>购房价、首付（可选按金额或按比例 %）、年利率、贷款年限、购买年月</strong>后，系统按月等额本息推算<strong>剩余房贷</strong>（自过户月起计还款月数到今天）。<strong>当前市值</strong>用于估算净值：不填则按购房价。若为继承/v1 迁移的旧数据，可先保留手动剩余房贷直至你改填按揭信息。</p>
+
+            <div class="panel panel-nw">
+              <div class="nw-panel-head">
+                <h3 class="nw-panel-title">自住房</h3>
+              </div>
+              <div id="nw-primary-row" class="nw-list-re"></div>
+            </div>
+
+            <div class="panel panel-nw">
+              <div class="nw-panel-head">
+                <h3 class="nw-panel-title">投资房 / 其他房产</h3>
+                <button type="button" class="btn btn-primary btn-sm" id="nw-btn-add-property">+ 添加一套房产</button>
+              </div>
+              <div class="nw-invest-grid-wrap">
+                <div class="nw-invest-grid-head-row">
+                  <div class="nw-invest-row-label nw-invest-head-label">项目</div>
+                  <div class="nw-invest-col-heads" id="nw-invest-col-heads"></div>
+                </div>
+                <div id="nw-investment-list"></div>
+              </div>
+              <p class="empty-rental" id="nw-inv-empty" hidden>暂无额外房产，若只有自住房可忽略。</p>
+            </div>
+          </section>
+
+          <section class="section-group">
+            <h2 class="group-title-input" style="border:none; margin-bottom:0.65rem; padding-left:0;">二、金融资产与其他资产</h2>
+            <p class="nw-section-note">按<strong>家庭成员分列</strong>填写各科目的余额；「+ 添加成员」会在右侧增加一列。左侧 <strong>⋮⋮</strong> 可拖动调整科目顺序。科目名称单行显示（过长会出现省略号，聚焦输入框可横向滚动查看）。行末为该行合计，底部为每名成员列合计与金融资产总合计。</p>
+
+            <div class="panel panel-nw">
+              <div class="nw-panel-head nw-panel-head-wrap">
+                <h3 class="nw-panel-title">资产科目（按成员）</h3>
+                <div class="nw-panel-actions">
+                  <button type="button" class="btn btn-primary btn-sm" id="nw-btn-add-person">+ 添加成员</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="nw-btn-add-asset">+ 自定义科目</button>
+                </div>
+              </div>
+              <div class="nw-assets-scroll">
+                <div class="nw-assets-matrix">
+                  <div class="nw-assets-matrix-head">
+                    <div class="nw-mat-h nw-mat-drag-col-h" aria-hidden="true" title="拖动排序"></div>
+                    <div class="nw-mat-h nw-mat-sticky-cat">科目</div>
+                    <div class="nw-mat-h nw-mat-person-region" id="nw-asset-people-header"></div>
+                    <div class="nw-mat-h nw-mat-total">合计</div>
+                    <div class="nw-mat-h nw-mat-actions-spacer" aria-hidden="true"></div>
+                  </div>
+                  <div id="nw-assets-list"></div>
+                  <div id="nw-assets-matrix-foot" class="nw-assets-matrix-foot"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-group">
+            <h2 class="group-title-input" style="border:none; margin-bottom:0.65rem; padding-left:0;">三、其他负债（不含上表房贷）</h2>
+            <p class="nw-section-note">信用卡、学贷、车贷（若未合并在房产中）、HELOC、Margin、私人借贷等。已从房产扣减的房贷不要重复填写。</p>
+
+            <div class="panel panel-nw">
+              <div class="nw-panel-head">
+                <h3 class="nw-panel-title">负债科目</h3>
+                <button type="button" class="btn btn-primary btn-sm" id="nw-btn-add-liability">+ 自定义一行</button>
+              </div>
+              <div class="nw-liab-head">
+                <span class="nw-liab-head-drag" aria-hidden="true"></span>
+                <span>科目名称</span>
+                <span class="nw-col-eq">金额</span>
+                <span></span>
+              </div>
+              <div id="nw-liabilities-list"></div>
+            </div>
+          </section>
+
+          <p class="nw-footer-note">提示：可补充但本表未单列的项——雇主养老金现值估算、应收借款、珠宝艺术品（主观估价）、公司股权、税务预留等。货币单位请自行统一（如 USD）。</p>
+        </div>
+      </div>
+
+      <div class="app-tab-panel" id="panel-projection" role="tabpanel" aria-labelledby="tab-btn-projection" hidden>
+        <div class="app-retirement panel">
+          <h2 class="projection-main-title">Retirement Simulator</h2>
+          <p class="rs-intro">自丈夫达到设定退休年龄起，共 50 个日历年：投资房净收入、401(k) 提取、社安金（计入现金收入）与子女教育等支出（可改假设）。在<strong>尚不能从 401(k) 领取</strong>的年度，若总支出大于投资房+社安等收入，缺口由 <strong>Brokerage</strong> 支取弥补；当年卖出产生的资本利得税按<strong>次年</strong>现金支出计入表内。 <strong>任一方达到可领取 401(k) 年龄后</strong>，该缺口改由提高 401(k) 提取解决，<strong>不再</strong>用 Brokerage 补缺口（Brokerage 仍按设定增长率滚存）。退休<strong>之前</strong>可假设每年继续缴存 401(k)（含雇主 match），按与账户相同的年化回报率滚存至退休起点；退休首年起不再计入缴存。货币单位默认美元；当前 401(k) 余额可从「家庭净资产」表同步。</p>
+
+          <div class="snapshot-scenarios-bar" aria-label="退休模拟方案快照">
+            <span class="snapshot-scenarios-bar-title">方案快照</span>
+            <select id="rs-scenario-select" class="snapshot-scenario-select" aria-label="已保存模拟方案">
+              <option value="">— 选择已保存方案 —</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" id="rs-scenario-load">载入</button>
+            <button type="button" class="btn btn-sm" id="rs-scenario-save-new">另存为新方案…</button>
+            <button type="button" class="btn btn-sm" id="rs-scenario-overwrite">覆盖所选方案</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="rs-scenario-delete">删除所选</button>
+            <p class="snapshot-scenarios-hint">含全部假设数值、假设区与表头自定义名称、列顺序等（与「retirement-simulator-v1」存档结构一致）。</p>
+          </div>
+
+          <div class="rs-controls" id="rs-form">
+            <div class="rs-assumption-sections" aria-label="假设参数（分区、可编辑名称、分区内拖动排序）">
+              <section class="rs-assumption-section">
+                <h3 class="rs-assumption-section-title">基本信息</h3>
+                <p class="rs-assumption-section-hint">夫妻出生日期、退休年龄；子女用于大学学费与国际学校费用计算。</p>
+                <div class="rs-assumption-list" id="rs-assumption-basic-static" aria-label="基本信息（可排序）">
+                  <div class="rs-assumption-item" data-rs-key="husbandDob" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="husbandDob" value="丈夫出生日期" spellcheck="false" />
+                      <input type="date" id="rs-h-dob" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="wifeDob" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="wifeDob" value="妻子出生日期" spellcheck="false" />
+                      <input type="date" id="rs-w-dob" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="retireAgeHusband" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="retireAgeHusband" value="丈夫退休年龄（一起退休，决定预测起点年）" spellcheck="false" />
+                      <input type="number" id="rs-retire-age" min="40" max="80" step="1" inputmode="numeric" />
+                    </label>
+                  </div>
+                </div>
+                <div class="rs-members-block">
+                  <div class="rs-members-toolbar">
+                    <span class="rs-members-toolbar-label">子女（家庭成员）</span>
+                    <button type="button" class="btn btn-primary btn-sm" id="rs-btn-add-child">+ 添加子女</button>
+                  </div>
+                  <div class="rs-assumption-list rs-children-list" id="rs-children-list" aria-label="子女出生日期（可排序）"></div>
+                </div>
+              </section>
+              <section class="rs-assumption-section">
+                <h3 class="rs-assumption-section-title">收入</h3>
+                <p class="rs-assumption-section-hint">投资房、401(k) / Brokerage、社安金等相关假设。</p>
+                <div class="rs-assumption-list" id="rs-assumption-income" aria-label="收入假设（可排序）">
+                  <div class="rs-assumption-item" data-rs-key="rentalYear1" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="rentalYear1" value="退休首年投资房净收入（税后，美元）" spellcheck="false" />
+                      <input type="text" id="rs-rental-y1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="rentalGrowthPct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="rentalGrowthPct" value="投资房净收入年增幅（%）" spellcheck="false" />
+                      <input type="number" id="rs-rental-growth" min="0" max="20" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="current401kTotal" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="current401kTotal" value="当前家庭总 401(k)（可从净资产同步）" spellcheck="false" />
+                      <input type="text" id="rs-401k-total" inputmode="decimal" placeholder="从净资产同步或手填" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="currentBrokerageTotal" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="currentBrokerageTotal" value="当前家庭 Brokerage 余额（可从净资产同步）" spellcheck="false" />
+                      <input type="text" id="rs-brokerage-total" inputmode="decimal" placeholder="从净资产同步或手填" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="brokerageGrowthPct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="brokerageGrowthPct" value="Brokerage 年增长率（%）" spellcheck="false" />
+                      <input type="number" id="rs-brokerage-growth" min="0" max="20" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="annual401kReturnPct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="annual401kReturnPct" value="401(k) 年化回报率（%）" spellcheck="false" />
+                      <input type="number" id="rs-401k-return" min="0" max="20" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="annual401kContributionPreRetire" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="annual401kContributionPreRetire" value="退休前每年存入 401(k)（含自缴与雇主 match，美元/年；至退休首年止）" spellcheck="false" />
+                      <input type="text" id="rs-401k-pre-annual" inputmode="decimal" placeholder="默认 68000" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="age401k" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="age401k" value="401(k) 可开始领取年龄" spellcheck="false" />
+                      <input type="number" id="rs-age-401k" min="50" max="75" step="0.5" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="withdrawRatePct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="withdrawRatePct" value="401(k) 年提取比例（%）" spellcheck="false" />
+                      <input type="number" id="rs-401k-withdraw-rate" min="0" max="20" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="rmdStartAge" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="rmdStartAge" value="RMD 起始年龄" spellcheck="false" />
+                      <input type="number" id="rs-rmd-start" min="70" max="80" step="1" inputmode="numeric" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="ageSS" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="ageSS" value="社安金开始年龄（展示用满龄年取整）" spellcheck="false" />
+                      <input type="number" id="rs-age-ss" min="62" max="70" step="1" inputmode="numeric" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="ssMonthlyEach" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="ssMonthlyEach" value="每人社安金（美元/月，至龄后）" spellcheck="false" />
+                      <input type="text" id="rs-ss-monthly" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="ssTaxableRatio" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="ssTaxableRatio" value="Social Security 应税比例（默认 85%）" spellcheck="false" />
+                      <input type="number" id="rs-ss-taxable-ratio" min="0" max="1" step="0.01" inputmode="decimal" />
+                    </label>
+                  </div>
+                </div>
+              </section>
+              <section class="rs-assumption-section">
+                <h3 class="rs-assumption-section-title">支出与税务</h3>
+                <p class="rs-assumption-section-hint">生活开销、通胀、子女教育支出与联邦扣减、州税等。</p>
+                <div class="rs-assumption-list" id="rs-assumption-cost" aria-label="支出与税务（可排序）">
+                  <div class="rs-assumption-item" data-rs-key="livingExpenseYear1" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="livingExpenseYear1" value="退休后家庭生活开销首年（美元/年）" spellcheck="false" />
+                      <input type="text" id="rs-living-y1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="inflationPct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="inflationPct" value="通胀率（生活开销年增长，%）" spellcheck="false" />
+                      <input type="number" id="rs-inflation" min="0" max="20" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="tuitionAnnual" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="tuitionAnnual" value="子女大学学杂费（美元/年，每位）" spellcheck="false" />
+                      <input type="text" id="rs-tuition" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="tuitionYears" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="tuitionYears" value="每位子女就读年数" spellcheck="false" />
+                      <input type="number" id="rs-tuition-years" min="1" max="8" step="1" inputmode="numeric" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="intlSchoolAnnual" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="intlSchoolAnnual" value="国际学校费用（美元/年，每位子女，至上大学前）" spellcheck="false" />
+                      <input type="text" id="rs-intl-annual" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="intlSchoolStartAge" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="intlSchoolStartAge" value="国际学校计费起始年龄（满该岁当年起至上大学前一年）" spellcheck="false" />
+                      <input type="number" id="rs-intl-start-age" min="1" max="25" step="1" inputmode="numeric" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="taxRatePct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="taxRatePct" value="额外州税率（可选，%）" spellcheck="false" />
+                      <input type="number" id="rs-tax-rate" min="0" max="60" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="brokerageCapitalGainTaxPct" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="brokerageCapitalGainTaxPct" value="LTCG 有效税率 r（%；假设卖出额全部为长期资本利得）" spellcheck="false" />
+                      <input type="number" id="rs-brokerage-cg-tax-pct" min="0" max="100" step="0.1" inputmode="decimal" />
+                    </label>
+                  </div>
+                  <div class="rs-assumption-item" data-rs-key="standardDeduction" draggable="true">
+                    <span class="rs-assumption-drag" title="拖动排序" aria-label="拖动排序" role="presentation">⋮⋮</span>
+                    <label class="rs-field">
+                      <input type="text" class="rs-field-label-input" data-rs-label-key="standardDeduction" value="Federal standard deduction（MFJ，美元/年）" spellcheck="false" />
+                      <input type="text" id="rs-std-deduction" inputmode="decimal" />
+                    </label>
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div class="rs-actions">
+              <button type="button" class="btn btn-primary" id="rs-btn-nw">从家庭净资产同步 401(k) / Brokerage</button>
+            </div>
+            <p class="rs-hint rs-field-span-2" id="rs-nw-hint"></p>
+          </div>
+
+          <div class="rs-summary" id="rs-summary" aria-live="polite"></div>
+
+          <div class="rs-table-wrap">
+            <table class="rs-table" id="rs-table">
+              <thead>
+                <tr id="rs-header-row">
+                  <th data-rs-col-key="year" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="year" value="年" spellcheck="false" /></th>
+                  <th data-rs-col-key="ageH" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="ageH" value="夫龄" spellcheck="false" /></th>
+                  <th data-rs-col-key="k401Total" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="k401Total" value="401K Total" spellcheck="false" /></th>
+                  <th data-rs-col-key="k401Balance" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="k401Balance" value="401K总额" spellcheck="false" /></th>
+                  <th data-rs-col-key="brokerageStart" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="brokerageStart" value="brokerage账户起始金额" spellcheck="false" /></th>
+                  <th data-rs-col-key="brokerageWithdrawal" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="brokerageWithdrawal" value="Brokerage 补缺（税后净额）" spellcheck="false" /></th>
+                  <th data-rs-col-key="brokerageCGTax" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="brokerageCGTax" value="资本利得税（上年卖出本年缴）" spellcheck="false" /></th>
+                  <th data-rs-col-key="brokerageBalance" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="brokerageBalance" value="brokerage账户余额" spellcheck="false" /></th>
+                  <th data-rs-col-key="rental" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="rental" value="投资房" spellcheck="false" /></th>
+                  <th data-rs-col-key="ssTotal" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="ssTotal" value="社安" spellcheck="false" /></th>
+                  <th data-rs-col-key="tax" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="tax" value="Tax" spellcheck="false" /></th>
+                  <th data-rs-col-key="intlSchool" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="intlSchool" value="国际学校" spellcheck="false" /></th>
+                  <th data-rs-col-key="tuition" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="tuition" value="大学支出" spellcheck="false" /></th>
+                  <th data-rs-col-key="living" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="living" value="生活支出" spellcheck="false" /></th>
+                  <th data-rs-col-key="income" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="income" value="总收入" spellcheck="false" /></th>
+                  <th data-rs-col-key="expense" draggable="true"><span class="rs-col-drag" title="拖动列顺序">⋮⋮</span><input type="text" class="rs-col-label-input" data-rs-col-key="expense" value="总支出" spellcheck="false" /></th>
+                </tr>
+              </thead>
+              <tbody id="rs-tbody"></tbody>
+            </table>
+          </div>
+          <p class="rs-footnote">生活支出默认每年通胀增长。401(k) 先按年化回报推至退休时点，再按提取比例提取；达到 RMD 起始年龄后，提取金额不低于当年 RMD 要求。Brokerage 余额按设定增速增长。为简化，<strong>假设补缺卖出毛额 B 全部为长期资本利得</strong>（不估算 cost basis），税 = B×r、次年现金支出；税后净额 (1−r)×B 与收支缺口一致（未触余额上限时）。尚不能领 401(k) 时：缺口 A 含当年应缴的上年资本利得税等；「资本利得税」列与「Tax」列分立——「Tax」仅联邦+州对 <strong>ordinary income</strong>（租金+应税社安+401(k) 等）的估算，<strong>不含</strong> LTCG。预测末年之后递延缴税未单列。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template id="tpl-rental">
+    <div class="rental-card" data-rental-id="">
+      <div class="rental-card-head">
+        <input type="text" class="rental-title" data-rental-field="label" />
+        <input type="button" class="btn btn-ghost btn-sm btn-remove-rental" data-label-id="lbl_btn_remove" />
+      </div>
+      <div class="fields fields-tight">
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_rent_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_rent_m" spellcheck="false" />
+          </div>
+          <input type="text" class="input-money" data-rental-field="rent" inputmode="decimal" placeholder="$0" autocomplete="off" />
+          <input type="text" class="input-cmt" data-rental-cmt="rent" data-cmt-ph="1" />
+        </label>
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <input type="text" class="input-label-name" data-label-id="lbl_rr_vac_n" spellcheck="false" title="" />
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_vac_m" spellcheck="false" />
+          </div>
+          <input type="number" min="0" max="12" step="1" data-rental-field="vacancyMonths" inputmode="numeric" placeholder="1" value="1" />
+          <input type="text" class="input-cmt" data-rental-cmt="vacancyMonths" data-cmt-ph="1" />
+        </label>
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_mtg_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_mtg_m" spellcheck="false" />
+          </div>
+          <input type="text" class="input-money" data-rental-field="mortgage" inputmode="decimal" placeholder="$0" autocomplete="off" />
+          <input type="text" class="input-cmt" data-rental-cmt="mortgage" data-cmt-ph="1" />
+        </label>
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_ins_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_ins_m" spellcheck="false" />
+          </div>
+          <input type="text" class="input-money" data-rental-field="insurance" inputmode="decimal" placeholder="$0" autocomplete="off" />
+          <input type="text" class="input-cmt" data-rental-cmt="insurance" data-cmt-ph="1" />
+        </label>
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_pt_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_pt_m" spellcheck="false" />
+          </div>
+          <input type="text" class="input-money" data-rental-field="propertyTax" inputmode="decimal" placeholder="$0" autocomplete="off" />
+          <input type="text" class="input-cmt" data-rental-cmt="propertyTax" data-cmt-ph="1" />
+        </label>
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_rep_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_rep_m" spellcheck="false" />
+          </div>
+          <input type="text" class="input-money" data-rental-field="repair" inputmode="decimal" placeholder="$0" autocomplete="off" />
+          <input type="text" class="input-cmt" data-rental-cmt="repair" data-cmt-ph="1" />
+        </label>
+        <label class="row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_hoa_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_hoa_m" spellcheck="false" />
+          </div>
+          <input type="text" class="input-money" data-rental-field="hoa" inputmode="decimal" placeholder="$0" autocomplete="off" />
+          <input type="text" class="input-cmt" data-rental-cmt="hoa" data-cmt-ph="1" />
+        </label>
+        <div class="row rental-mgmt-row row-line">
+          <div class="row-label-cell">
+            <textarea class="input-label-name" data-label-id="lbl_rr_mgmt_n" rows="2" spellcheck="false"></textarea>
+            <input type="text" class="input-label-meta" data-label-id="lbl_rr_mgmt_m" spellcheck="false" />
+          </div>
+          <span class="rental-readonly" data-rental-mgmt>—</span>
+          <span class="rental-cmt-placeholder"></span>
+        </div>
+        <p class="rental-computed" data-rental-computed></p>
+        <p class="rental-net" data-rental-net></p>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-nw-property">
+    <div class="nw-property-card" data-nw-kind="property">
+      <input type="hidden" data-field="legacyRemaining" value="" />
+      <div class="nw-property-card-head">
+        <input type="text" class="nw-inp-label nw-prop-title" data-field="label" placeholder="房产名称" autocomplete="off" />
+        <button type="button" class="nw-btn-remove" data-action="remove" title="移除此套" aria-label="移除">×</button>
+      </div>
+      <div class="nw-prop-grid">
+        <label class="nw-prop-field"><span>购房价</span><input type="text" class="nw-inp-num" data-field="purchasePrice" inputmode="decimal" placeholder="$0" /></label>
+        <label class="nw-prop-field nw-downpay-field">
+          <span class="nw-downpay-label-line">
+            <span>首付</span>
+            <select data-field="downPayMode" class="nw-downpay-mode" aria-label="首付按金额或按比例">
+              <option value="amount">金额</option>
+              <option value="percent">比例 %</option>
+            </select>
+          </span>
+          <input type="text" class="nw-inp-num" data-field="downPayment" inputmode="decimal" placeholder="$0" />
+        </label>
+        <label class="nw-prop-field"><span>年利率 %</span><input type="number" class="nw-inp-num" data-field="annualRate" min="0" step="any" inputmode="decimal" placeholder="如 6.5" /></label>
+        <label class="nw-prop-field"><span>贷款年限</span><input type="number" class="nw-inp-num" data-field="loanYears" min="1" step="1" inputmode="numeric" placeholder="30" /></label>
+        <label class="nw-prop-field"><span>购买年月</span><input type="month" class="nw-inp-num" data-field="purchaseYm" /></label>
+      </div>
+      <div class="nw-prop-readouts">
+        <span class="nw-prop-readout" data-readout="principal">贷款本金 —</span>
+        <span class="nw-prop-readout" data-readout="monthsPaid">—</span>
+        <span class="nw-prop-readout" data-readout="remaining">剩余房贷 —</span>
+      </div>
+      <label class="nw-prop-current nw-prop-field nw-prop-field-span"><span>当前市值（估值，留空则按购房价）</span><input type="text" class="nw-inp-num" data-field="currentValue" inputmode="decimal" placeholder="$0（默认同购房价）" /></label>
+      <div class="nw-prop-equity-wrap"><span class="nw-equity muted" data-equity>净值 —</span><span class="nw-prop-equity-hint">净值 = 当前市值 − 剩余房贷</span></div>
+    </div>
+  </template>
+
+  <template id="tpl-nw-property-primary">
+    <div class="nw-property-card" data-nw-kind="property" data-primary="1">
+      <input type="hidden" data-field="legacyRemaining" value="" />
+      <div class="nw-property-card-head nw-property-card-head-no-remove">
+        <input type="text" class="nw-inp-label nw-prop-title" data-field="label" placeholder="自住房" autocomplete="off" />
+      </div>
+      <div class="nw-prop-grid">
+        <label class="nw-prop-field"><span>购房价</span><input type="text" class="nw-inp-num" data-field="purchasePrice" inputmode="decimal" placeholder="$0" /></label>
+        <label class="nw-prop-field nw-downpay-field">
+          <span class="nw-downpay-label-line">
+            <span>首付</span>
+            <select data-field="downPayMode" class="nw-downpay-mode" aria-label="首付按金额或按比例">
+              <option value="amount">金额</option>
+              <option value="percent">比例 %</option>
+            </select>
+          </span>
+          <input type="text" class="nw-inp-num" data-field="downPayment" inputmode="decimal" placeholder="$0" />
+        </label>
+        <label class="nw-prop-field"><span>年利率 %</span><input type="number" class="nw-inp-num" data-field="annualRate" min="0" step="any" inputmode="decimal" placeholder="如 6.5" /></label>
+        <label class="nw-prop-field"><span>贷款年限</span><input type="number" class="nw-inp-num" data-field="loanYears" min="1" step="1" inputmode="numeric" placeholder="30" /></label>
+        <label class="nw-prop-field"><span>购买年月</span><input type="month" class="nw-inp-num" data-field="purchaseYm" /></label>
+      </div>
+      <div class="nw-prop-readouts">
+        <span class="nw-prop-readout" data-readout="principal">贷款本金 —</span>
+        <span class="nw-prop-readout" data-readout="monthsPaid">—</span>
+        <span class="nw-prop-readout" data-readout="remaining">剩余房贷 —</span>
+      </div>
+      <label class="nw-prop-current nw-prop-field nw-prop-field-span"><span>当前市值（估值，留空则按购房价）</span><input type="text" class="nw-inp-num" data-field="currentValue" inputmode="decimal" placeholder="$0（默认同购房价）" /></label>
+      <div class="nw-prop-equity-wrap"><span class="nw-equity muted" data-equity>净值 —</span><span class="nw-prop-equity-hint">净值 = 当前市值 − 剩余房贷</span></div>
+    </div>
+  </template>
+
+  <template id="tpl-nw-asset">
+    <div class="nw-asset-row nw-mat-row" data-nw-kind="asset">
+      <span class="nw-asset-drag-handle" draggable="true" title="拖动排序" aria-label="拖动排序" role="button" tabindex="0">⋮⋮</span>
+      <div class="nw-mat-cell nw-mat-sticky-cat nw-mat-label-cell">
+        <input type="text" class="nw-inp-label nw-asset-label-input" data-field="label" placeholder="科目" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="nw-mat-person-cols" data-person-amounts></div>
+      <div class="nw-mat-cell nw-mat-total nw-mat-row-total-cell"><span data-row-total>0</span></div>
+      <button type="button" class="nw-btn-remove nw-mat-remove" data-action="remove" title="删除此行" aria-label="移除">×</button>
+    </div>
+  </template>
+
+  <template id="tpl-nw-liability">
+    <div class="nw-liab-row" data-nw-kind="liability">
+      <span class="nw-liab-drag-handle" draggable="true" title="拖动排序" aria-label="拖动排序" role="button" tabindex="0">⋮⋮</span>
+      <input type="text" class="nw-inp-label" data-field="label" placeholder="科目" autocomplete="off" />
+      <input type="text" class="nw-inp-num" data-field="amount" inputmode="decimal" placeholder="$0" />
+      <button type="button" class="nw-btn-remove" data-action="remove" title="移除此行" aria-label="移除">×</button>
+    </div>
+  </template>
+
+  <dialog id="pdf-export-dialog" class="pdf-export-dialog" aria-labelledby="pdf-export-dialog-title">
+    <div class="pdf-export-dialog-inner">
+      <h3 id="pdf-export-dialog-title" class="pdf-export-dialog-title">选择导出内容</h3>
+      <p class="pdf-export-dialog-hint">可多选一项或多项；打印时在目标打印机中选「另存为 PDF」。</p>
+      <div class="pdf-export-quick-row">
+        <button type="button" class="pdf-export-quick-btn" id="pdf-export-select-all">全选</button>
+        <span class="pdf-export-quick-sep" aria-hidden="true">·</span>
+        <button type="button" class="pdf-export-quick-btn" id="pdf-export-select-none">全不选</button>
+      </div>
+      <fieldset class="pdf-export-fieldset">
+        <legend class="visually-hidden">功能模块</legend>
+        <label class="pdf-export-label"><input type="checkbox" name="pdf-mod" value="panel-cashflow" checked /> 家庭现金流估算</label>
+        <label class="pdf-export-label"><input type="checkbox" name="pdf-mod" value="panel-networth" checked /> 家庭净资产</label>
+        <label class="pdf-export-label"><input type="checkbox" name="pdf-mod" value="panel-projection" checked /> Retirement Simulator</label>
+      </fieldset>
+      <div class="pdf-export-dialog-actions">
+        <button type="button" class="btn btn-ghost" id="pdf-export-cancel">取消</button>
+        <button type="button" class="btn btn-primary" id="pdf-export-confirm">打印 / 保存 PDF</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="labels-defaults.js"></script>
+  <script src="app.js"></script>
+  <script src="net-worth.js"></script>
+  <script src="projection.js"></script>
+  <script src="app-tabs.js"></script>
+  <script src="export-pdf.js"></script>
+</body>
+</html>
